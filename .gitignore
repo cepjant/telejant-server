@@ -1,0 +1,5 @@
+env
+.env
+*.session*
+.idea
+__pycache__
