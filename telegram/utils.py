@@ -1,24 +1,25 @@
 """ Вспомогательные функции, испольщующиеся в нескольких местах """
+from telethon.tl.types import MessageMediaDocument, MessageMediaPhoto, DocumentAttributeSticker
 
 
-def get_message_media_document(media):
+def get_message_media_document(message):
     content = ""
-    for attr in media['document'].get('attributes', []):
-        if attr['_'] == 'DocumentAttributeSticker':
-            content = 'Стикер (эмодзи-альтрентива:' + attr['alt'] + ')'
+    for attr in message.document.attributes:
+        if isinstance(attr, DocumentAttributeSticker):
+            content = 'Стикер (эмодзи-альтрентива:' + attr.alt + ')'
     return content
 
 
 def get_message_content(message):
     content = ""
-    if message.get('message'):
-        content = message.get('message')
+    if message.message:
+        content = message.message
     else:
-        if message.get('media'):
-            media = message.get('media')
-            if media['_'] == 'MessageMediaDocument':
-                content = get_message_media_document(media)
-            elif media['_'] == 'MessageMediaPhoto':
+        if message.media:
+            media = message.media
+            if isinstance(media, MessageMediaDocument):
+                content = get_message_media_document(message)
+            elif isinstance(media, MessageMediaPhoto):
                 pass
 
     return content
