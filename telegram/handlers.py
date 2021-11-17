@@ -6,7 +6,7 @@ from telegram.utils import get_message_content
 async def income_private_message_handler(tg_client, message):
     user_id = message.peer_id.user_id
     user_entity = await tg_client.get_entity(user_id)
-    content = get_message_content(message)
+    content, media_content = await get_message_content(message)
     print('Сообщение от', user_entity.username, '--', content)
 
 
