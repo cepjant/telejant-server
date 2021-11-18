@@ -6,7 +6,7 @@ from telegram.client import send_telegram_message
 
 
 async def post_send_message(request):
-    """ POST запрос на отправку сообщений """
+    """ POST запрос на отправку сообщения """
 
     json_data = await request.json()
     username = json_data['username']

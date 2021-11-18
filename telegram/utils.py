@@ -18,7 +18,7 @@ async def get_message_content(message):
 
 
 async def get_message_media(message):
-    """ """
+    """ Получение содержимого медиа файлов (стикеров, изображений) из сообщения """
     media_content = None
     media_content_description = None
     if isinstance(message.media, MessageMediaDocument):
