@@ -4,40 +4,48 @@ import os
 from telethon.tl.types import MessageMediaDocument, MessageMediaPhoto, DocumentAttributeSticker
 
 
-def get_message_media_document(message):
+async def get_message_content(message):
+    """ Получение содержимого сообщения """
+    text = None  # текст сообщения (сообщение может содержать текст + изображение)
+    media_content = None  # base64 изображения/стикера
+    media_content_description = None  # описание файла
+    if message.message:
+        text = message.message
+    if message.media:
+        media_content, media_content_description = await get_message_media(message)
+
+    return text, media_content, media_content_description
+
+
+async def get_message_media(message):
+    """ """
+    media_content = None
+    media_content_description = None
+    if isinstance(message.media, MessageMediaDocument):
+        media_content, media_content_description = await _get_document_content(message)
+    elif isinstance(message.media, MessageMediaPhoto):
+        media_content = await _get_media_content(message)
+        media_content_description = 'фотография'
+    return media_content, media_content_description
+
+
+async def _get_document_content(message):
     """ Получение медиа объектов, сгруппированных Telethon'ом в категорию Document,
     например стикеры
     """
-    content = ""
+    content = None
+    content_description = None
     for attr in message.document.attributes:
         if isinstance(attr, DocumentAttributeSticker):
-            content = 'Стикер (эмодзи-альтрентива:' + attr.alt + ')'
-    return content
+            content = await _get_media_content(message)
+            content_description = 'Стикер (эмодзи-альтернатива:' + attr.alt + ')'
+    return content, content_description
 
 
-async def get_message_media_photo(message):
-    """ Получение фотографии из сообщения (фотография скачивается методами Telethon),
-     переводится в base64, резльутат возвращается, а фотография удаляется. """
+async def _get_media_content(message):
+    """ Загружает медиа (стикер, изображение), возвращает данные, а медиа удаляет с диска """
     path = await message.download_media()
-    with open(path, 'rb') as image_file:
-        file = image_file.read()
+    with open(path, 'rb') as sticker_file:
+        content = sticker_file.read()
     os.remove(path)
-    return file
-
-
-async def get_message_content(message):
-    """ Получение содержимого сообщения """
-    media_content = b""
-    content = ""
-    if message.message:
-        content = message.message
-    else:
-        if message.media:
-            media = message.media
-            if isinstance(media, MessageMediaDocument):
-                content = get_message_media_document(message)
-            elif isinstance(media, MessageMediaPhoto):
-                media_content = await get_message_media_photo(message)
-                content = 'фотография'
-
-    return content, media_content
+    return content
