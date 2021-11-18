@@ -1,9 +1,9 @@
 """ Клиент телеграм - получение и отправка сообщений """
-
-from telegram.handlers import income_private_message_handler
-from settings import API_ID, API_HASH
 from telethon import TelegramClient, events
 from telethon.tl.types import PeerUser, PeerChannel
+
+from settings import API_ID, API_HASH
+from telegram.handlers import income_private_message_handler
 
 telegram_client = TelegramClient('session_name_1', int(API_ID), API_HASH)
 

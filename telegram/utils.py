@@ -19,8 +19,8 @@ async def get_message_media_photo(message):
     """ Получение фотографии из сообщения (фотография скачивается методами Telethon),
      переводится в base64, резльутат возвращается, а фотография удаляется. """
     path = await message.download_media()
-    with open(path, 'rb') as f:
-        file = f.read()
+    with open(path, 'rb') as image_file:
+        file = image_file.read()
     os.remove(path)
     return file
 

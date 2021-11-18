@@ -16,4 +16,3 @@ if __name__ == '__main__':
     telegram_client.start()
     web.run_app(app, loop=loop)
     loop.create_task(telegram_client.run_until_disconnected())
-
