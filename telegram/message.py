@@ -1,4 +1,5 @@
-""" Вспомогательные функции """
+""" Функции для обработки сообщений и получения из них информации """
+
 import os
 
 from telethon.tl.types import MessageMediaDocument, MessageMediaPhoto, DocumentAttributeSticker
@@ -15,6 +16,17 @@ async def get_message_content(message):
         media_content, media_content_description = await get_message_media(message)
 
     return text, media_content, media_content_description
+
+
+async def get_message_author_info(message, tg_client):
+    """ Получение информации об авторе (поля перечислены в списке 'author_fields') сообщения """
+
+    author_fields = ['id', 'bot', 'first_name', 'last_name', 'phone', 'username']
+
+    author_id = message.peer_id.user_id
+    author_entity = await tg_client.get_entity(author_id)
+    author_info = {field: getattr(author_entity, field) for field in author_fields}
+    return author_info
 
 
 async def get_message_media(message):

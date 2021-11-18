@@ -2,8 +2,8 @@
 
 from aiohttp import web
 
-from views import post_send_message
+from views import send_message
 
 routes = [
-    web.post('/send_message/', post_send_message)
+    web.post('/send_message/', send_message)
 ]

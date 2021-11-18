@@ -28,6 +28,13 @@ async def income_handler(event):
         pass
 
 
-async def send_telegram_message(username, text):
+async def send_telegram_message(user, text):
     """ Отправка сообщений """
-    await telegram_client.send_message(username, text)
+    if user.get('user_id'):
+        identifier = int(user.get('user_id'))
+    elif user.get('username'):
+        identifier = user.get('username')
+    else:
+        return None
+    user = await telegram_client.get_entity(identifier)
+    return await telegram_client.send_message(user, text)
