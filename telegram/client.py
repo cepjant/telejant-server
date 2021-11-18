@@ -1,10 +1,9 @@
-import asyncio
-
-from aiohttp import web
-
-from telegram.handlers import income_private_message_handler
-from settings import API_ID, API_HASH
+""" Клиент телеграм - получение и отправка сообщений """
 from telethon import TelegramClient, events
+from telethon.tl.types import PeerUser, PeerChannel
+
+from settings import API_ID, API_HASH
+from telegram.handlers import income_private_message_handler
 
 telegram_client = TelegramClient('session_name_1', int(API_ID), API_HASH)
 
@@ -15,19 +14,20 @@ async def income_handler(event):
         в зависимости от типа сообщения: личного/группового
     """
 
-    message_dict = event.message.to_dict()
+    message = event.message
 
     # источник получения сообщения (либо канал, либо личный чат)
-    peer = message_dict['peer_id']['_']
+    peer = message.peer_id
 
-    if peer == 'PeerUser':
-        # личный диалогSS
-        await income_private_message_handler(telegram_client, message_dict)
+    if isinstance(peer, PeerUser):
+        # личный диалог
+        await income_private_message_handler(telegram_client, message)
 
-    elif peer == 'PeerChannel':
+    elif isinstance(peer, PeerChannel):
         # групповой диалог / канал
         pass
 
 
 async def send_telegram_message(username, text):
+    """ Отправка сообщений """
     await telegram_client.send_message(username, text)
