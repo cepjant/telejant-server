@@ -1,10 +1,13 @@
-""" Вспомогательные функции, испольщующиеся в нескольких местах """
+""" Вспомогательные функции """
 import os
 
 from telethon.tl.types import MessageMediaDocument, MessageMediaPhoto, DocumentAttributeSticker
 
 
 def get_message_media_document(message):
+    """ Получение медиа объектов, сгруппированных Telethon'ом в категорию Document,
+    например стикеры
+    """
     content = ""
     for attr in message.document.attributes:
         if isinstance(attr, DocumentAttributeSticker):
@@ -13,6 +16,8 @@ def get_message_media_document(message):
 
 
 async def get_message_media_photo(message):
+    """ Получение фотографии из сообщения (фотография скачивается методами Telethon),
+     переводится в base64, резльутат возвращается, а фотография удаляется. """
     path = await message.download_media()
     with open(path, 'rb') as f:
         file = f.read()
@@ -21,6 +26,7 @@ async def get_message_media_photo(message):
 
 
 async def get_message_content(message):
+    """ Получение содержимого сообщения """
     media_content = b""
     content = ""
     if message.message:

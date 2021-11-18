@@ -1,6 +1,4 @@
-import asyncio
-
-from aiohttp import web
+""" Клиент телеграм - получение и отправка сообщений """
 
 from telegram.handlers import income_private_message_handler
 from settings import API_ID, API_HASH
@@ -31,4 +29,5 @@ async def income_handler(event):
 
 
 async def send_telegram_message(username, text):
+    """ Отправка сообщений """
     await telegram_client.send_message(username, text)
