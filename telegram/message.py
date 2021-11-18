@@ -2,7 +2,9 @@
 
 import os
 
-from telethon.tl.types import MessageMediaDocument, MessageMediaPhoto, DocumentAttributeSticker
+from telethon.tl.types import (
+    MessageMediaDocument, MessageMediaPhoto, DocumentAttributeSticker, DocumentAttributeAudio
+)
 
 
 async def get_message_content(message):
@@ -51,6 +53,9 @@ async def _get_document_content(message):
         if isinstance(attr, DocumentAttributeSticker):
             content = await _get_media_content(message)
             content_description = 'Стикер (эмодзи-альтернатива:' + attr.alt + ')'
+        elif isinstance(attr, DocumentAttributeAudio) and attr.voice:
+            content = await _get_media_content(message)
+            content_description = 'Аудиосообщение'
     return content, content_description
 
 
