@@ -13,7 +13,7 @@ async def send_message(request):
     text = json_data['text']
     result = await send_telegram_message(user, text)
     if result:
-        response = {"status": 200}
+        response = {"status": 201, "data": {"id": result.id}}
     else:
         response = {"status": 500}
     return web.json_response(**response)

@@ -8,8 +8,7 @@ from telegram.handlers import income_private_message_handler
 telegram_client = TelegramClient('session_name_1', int(API_ID), API_HASH)
 
 
-@telegram_client.on(events.NewMessage(incoming=True))
-async def income_handler(event):
+async def client_income_handler(event):
     """ Общий обработчик входящих сообщений, распределяет в соответствующие функции
         в зависимости от типа сообщения: личного/группового
     """
@@ -21,11 +20,11 @@ async def income_handler(event):
 
     if isinstance(peer, PeerUser):
         # личный диалог
-        await income_private_message_handler(telegram_client, message)
+        return await income_private_message_handler(telegram_client, message)
 
     elif isinstance(peer, PeerChannel):
         # групповой диалог / канал
-        pass
+        return None
 
 
 async def send_telegram_message(user, text):

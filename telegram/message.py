@@ -1,23 +1,26 @@
 """ Функции для обработки сообщений и получения из них информации """
 
+import base64
 import os
 
 from telethon.tl.types import (
-    MessageMediaDocument, MessageMediaPhoto, DocumentAttributeSticker, DocumentAttributeAudio
+    MessageMediaDocument, MessageMediaPhoto, DocumentAttributeSticker, DocumentAttributeAudio,
+    DocumentAttributeFilename
 )
 
 
 async def get_message_content(message):
     """ Получение содержимого сообщения """
     text = None  # текст сообщения (сообщение может содержать текст + изображение)
-    media_content = None  # base64 изображения/стикера
+    base64_content = None  # base64 изображения/стикера
     media_content_description = None  # описание файла
+    file_name = None  # название файла
     if message.message:
         text = message.message
     if message.media:
-        media_content, media_content_description = await get_message_media(message)
+        base64_content, media_content_description, file_name = await get_message_media(message)
 
-    return text, media_content, media_content_description
+    return text, base64_content, media_content_description, file_name
 
 
 async def get_message_author_info(message, tg_client):
@@ -33,30 +36,37 @@ async def get_message_author_info(message, tg_client):
 
 async def get_message_media(message):
     """ Получение содержимого медиа файлов (стикеров, изображений) из сообщения """
-    media_content = None
+    base64_content = None
     media_content_description = None
+    file_name = None
     if isinstance(message.media, MessageMediaDocument):
-        media_content, media_content_description = await _get_document_content(message)
+        base64_content, media_content_description, file_name = await _get_document_content(message)
     elif isinstance(message.media, MessageMediaPhoto):
-        media_content = await _get_media_content(message)
-        media_content_description = 'фотография'
-    return media_content, media_content_description
+        base64_content, file_name = await _get_media_content(message)
+        media_content_description = 'picture'
+    return base64_content, media_content_description, file_name
 
 
 async def _get_document_content(message):
     """ Получение медиа объектов, сгруппированных Telethon'ом в категорию Document,
     например стикеры
     """
-    content = None
+    base64_content = None
     content_description = None
+    file_name = None
     for attr in message.document.attributes:
         if isinstance(attr, DocumentAttributeSticker):
-            content = await _get_media_content(message)
-            content_description = 'Стикер (эмодзи-альтернатива:' + attr.alt + ')'
+            base64_content, file_name = await _get_media_content(message)
         elif isinstance(attr, DocumentAttributeAudio) and attr.voice:
-            content = await _get_media_content(message)
-            content_description = 'Аудиосообщение'
-    return content, content_description
+            base64_content, file_name = await _get_media_content(message)
+            content_description = 'audio_message'
+        elif isinstance(attr, DocumentAttributeFilename):
+            if attr.file_name == 'sticker.webp':
+                content_description = 'sticker'
+            elif attr.file_name == 'AnimatedSticker.tgs':
+                content_description = 'animated_sticker'
+
+    return base64_content, content_description, file_name
 
 
 async def _get_media_content(message):
@@ -65,4 +75,5 @@ async def _get_media_content(message):
     with open(path, 'rb') as sticker_file:
         content = sticker_file.read()
     os.remove(path)
-    return content
+    encoded = base64.b64encode(content).decode('ascii')
+    return encoded, path
