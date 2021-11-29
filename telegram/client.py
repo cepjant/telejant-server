@@ -3,27 +3,23 @@ from telethon import TelegramClient, events
 from telethon.tl.types import PeerUser, PeerChannel
 
 from settings import API_ID, API_HASH
-from telegram.handlers import income_private_message_handler
+from telegram.handlers import private_message_handler
 
 telegram_client = TelegramClient('session_name_1', int(API_ID), API_HASH)
 
 
-async def client_income_handler(event):
-    """ Общий обработчик входящих сообщений, распределяет в соответствующие функции
+async def client_handler(event):
+    """ Общий обработчик сообщений, распределяет в соответствующие функции
         в зависимости от типа сообщения: личного/группового
     """
 
     message = event.message
 
-    # источник получения сообщения (либо канал, либо личный чат)
-    peer = message.peer_id
-
-    if isinstance(peer, PeerUser):
-        # личный диалог
-        return await income_private_message_handler(telegram_client, message)
-
-    elif isinstance(peer, PeerChannel):
-        # групповой диалог / канал
+    if message.is_private:
+        return await private_message_handler(telegram_client, message)
+    elif message.is_channel:
+        return None
+    elif message.is_group:
         return None
 
 

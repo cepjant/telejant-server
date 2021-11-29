@@ -23,15 +23,15 @@ async def get_message_content(message):
     return text, base64_content, media_content_description, file_name
 
 
-async def get_message_author_info(message, tg_client):
-    """ Получение информации об авторе (поля перечислены в списке 'author_fields') сообщения """
+async def get_peer_info(message, tg_client):
+    """ Получение информации о собеседнике """
 
-    author_fields = ['id', 'bot', 'first_name', 'last_name', 'phone', 'username']
+    peer_fields = ['id', 'bot', 'first_name', 'last_name', 'phone', 'username']
 
-    author_id = message.peer_id.user_id
-    author_entity = await tg_client.get_entity(author_id)
-    author_info = {field: getattr(author_entity, field) for field in author_fields}
-    return author_info
+    peer_id = message.peer_id.user_id
+    peer_entity = await tg_client.get_entity(peer_id)
+    peer_info = {field: getattr(peer_entity, field) for field in peer_fields}
+    return peer_info
 
 
 async def get_message_media(message):
