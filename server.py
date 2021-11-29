@@ -16,7 +16,6 @@ async def main():
     @telegram_client.on(events.NewMessage(incoming=True))
     async def income_handler(event):
         message_data = await client_income_handler(event)
-
         if message_data:
             await session.post(SERVICE_URL, json=message_data)
 
@@ -30,4 +29,3 @@ if __name__ == '__main__':
     loop.run_until_complete(main())
     telegram_client.start()
     web.run_app(app, loop=loop)
-    loop.create_task(telegram_client.run_until_disconnected())
