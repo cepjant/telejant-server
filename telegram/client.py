@@ -1,6 +1,5 @@
 """ Клиент телеграм - получение и отправка сообщений """
-from telethon import TelegramClient, events
-from telethon.tl.types import PeerUser, PeerChannel
+from telethon import TelegramClient
 
 from settings import API_ID, API_HASH
 from telegram.handlers import private_message_handler
@@ -17,10 +16,7 @@ async def client_handler(event):
 
     if message.is_private:
         return await private_message_handler(telegram_client, message)
-    elif message.is_channel:
-        return None
-    elif message.is_group:
-        return None
+    return None
 
 
 async def send_telegram_message(user, text, file=None, attributes=None):

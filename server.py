@@ -11,6 +11,8 @@ from telegram.client import telegram_client, client_handler
 
 
 async def main():
+    """ Установка соединения с сервисом посредником и объявление хендлеров """
+
     session = aiohttp.ClientSession()
 
     @telegram_client.on(events.NewMessage())

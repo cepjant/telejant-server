@@ -3,11 +3,12 @@
 import base64
 import os
 
-from settings import MAX_UPLOAD_FILE_SIZE_KB
 from telethon.tl.types import (
     MessageMediaDocument, MessageMediaPhoto, DocumentAttributeSticker, DocumentAttributeAudio,
     DocumentAttributeFilename
 )
+
+from settings import MAX_UPLOAD_FILE_SIZE_KB
 
 
 async def get_message_content(message):
