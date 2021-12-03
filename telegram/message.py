@@ -3,6 +3,7 @@
 import base64
 import os
 
+from settings import MAX_UPLOAD_FILE_SIZE_KB
 from telethon.tl.types import (
     MessageMediaDocument, MessageMediaPhoto, DocumentAttributeSticker, DocumentAttributeAudio,
     DocumentAttributeFilename
@@ -57,9 +58,12 @@ async def _get_document_content(message):
     for attr in message.document.attributes:
         if isinstance(attr, DocumentAttributeSticker):
             base64_content, file_name = await _get_media_content(message)
-        elif isinstance(attr, DocumentAttributeAudio) and attr.voice:
+        elif isinstance(attr, DocumentAttributeAudio):
+            if attr.voice:
+                content_description = 'audio_message'
+            else:
+                content_description = 'audio'
             base64_content, file_name = await _get_media_content(message)
-            content_description = 'audio_message'
         elif isinstance(attr, DocumentAttributeFilename):
             if attr.file_name == 'sticker.webp':
                 content_description = 'sticker'
@@ -72,8 +76,14 @@ async def _get_document_content(message):
 async def _get_media_content(message):
     """ Загружает медиа (стикер, изображение), возвращает данные, а медиа удаляет с диска """
     path = await message.download_media()
-    with open(path, 'rb') as sticker_file:
-        content = sticker_file.read()
+
+    with open(path, 'rb') as media_file:
+        media_file.seek(0, 2)
+        if MAX_UPLOAD_FILE_SIZE_KB and media_file.tell() / 1000 > int(MAX_UPLOAD_FILE_SIZE_KB):
+            content = None
+        else:
+            media_file.seek(0, 0)
+            content = media_file.read()
     os.remove(path)
-    encoded = base64.b64encode(content).decode('ascii')
+    encoded = base64.b64encode(content).decode('ascii') if content else None
     return encoded, path

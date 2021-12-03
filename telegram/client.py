@@ -23,7 +23,7 @@ async def client_handler(event):
         return None
 
 
-async def send_telegram_message(user, text):
+async def send_telegram_message(user, text, file=None, attributes=None):
     """ Отправка сообщений """
     if user.get('user_id'):
         identifier = int(user.get('user_id'))
@@ -32,4 +32,4 @@ async def send_telegram_message(user, text):
     else:
         return None
     user = await telegram_client.get_entity(identifier)
-    return await telegram_client.send_message(user, text)
+    return await telegram_client.send_message(user, text, file=file, attributes=attributes)
