@@ -9,11 +9,20 @@ from routes import routes
 from settings import SERVICE_URL
 from telegram.client import telegram_client, client_handler
 
+app = web.Application()
+
+
+async def on_shutdown(application):
+    """ Обработчик останова сервера """
+    await application['session'].close()
+
 
 async def main():
-    """ Установка соединения с сервисом посредником и объявление хендлеров """
+    """ Установка соединения с сервисом посредником и объявление обработчиков событий
+     из телеграма """
 
     session = aiohttp.ClientSession()
+    app['session'] = session  # app должен хранить сессию, чтобы при останове app закрыть сессию
 
     @telegram_client.on(events.NewMessage())
     async def income_handler(event):
@@ -25,8 +34,8 @@ async def main():
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
 
-    app = web.Application()
     app.add_routes(routes)
+    app.on_shutdown.append(on_shutdown)
 
     loop.run_until_complete(main())
     telegram_client.start()
