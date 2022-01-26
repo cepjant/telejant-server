@@ -6,7 +6,7 @@ from aiohttp import web
 from telethon import events
 
 from routes import routes
-from settings import SERVICE_URL
+from settings import TARGET_SYSTEM_URL
 from telegram.client import telegram_client, client_handler
 
 app = web.Application()
@@ -28,7 +28,7 @@ async def main():
     async def income_handler(event):
         message_data = await client_handler(event)
         if message_data:
-            await session.post(SERVICE_URL, json=message_data)
+            await session.post(TARGET_SYSTEM_URL, json=message_data)
 
 
 if __name__ == '__main__':
