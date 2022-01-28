@@ -6,6 +6,7 @@ from aiohttp import web
 from telethon.tl.types import DocumentAttributeFilename
 
 from telegram.client import send_telegram_message
+from telegram.exceptions import PeerNotFoundError
 
 
 async def send_message(request):
@@ -23,9 +24,14 @@ async def send_message(request):
         filename = DocumentAttributeFilename(json_data.get('file_name'))
         attributes.append(filename)
 
-    result = await send_telegram_message(user, text, file=file, attributes=attributes)
-    if result:
-        response = {"status": 201, "data": {"id": result.id}}
-    else:
-        response = {"status": 500}
+    try:
+        result = await send_telegram_message(user, text, file=file, attributes=attributes)
+        if result:
+            response = {"status": 201, "data": {"id": result.id}}
+        else:
+            response = {"status": 500}
+    except PeerNotFoundError:
+        # пользователь для отправки сообщения не найден
+        response = {"status": 400, "data": {"error": "PeerNotFound"}}
+
     return web.json_response(**response)
