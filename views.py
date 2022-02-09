@@ -27,7 +27,11 @@ async def send_message(request):
     try:
         result = await send_telegram_message(user, text, file=file, attributes=attributes)
         if result:
-            response = {"status": 201, "data": {"id": result.id}}
+            data = {
+                "id": result.id,
+                "peer_id": result.peer_id.user_id
+            }
+            response = {"status": 201, "data": data}
         else:
             response = {"status": 500}
     except PeerNotFoundError:
