@@ -27,7 +27,7 @@ async def main():
     @telegram_client.on(events.NewMessage())
     async def income_handler(event):
         message_data = await client_handler(event)
-        if message_data:
+        if message_data and TARGET_SYSTEM_URL:
             await session.post(TARGET_SYSTEM_URL, json=message_data)
 
 
