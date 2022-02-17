@@ -1,7 +1,9 @@
 """ Клиент телеграм - получение и отправка сообщений """
 
 import phonenumbers
+import random
 from telethon import TelegramClient
+from telethon import functions, types
 
 from settings import API_ID, API_HASH
 from telegram.exceptions import PeerNotFoundError
@@ -33,12 +35,32 @@ async def send_telegram_message(user, text, file=None, attributes=None):
         # приводим номер телефона к международному формату +7**********
         identifier = phonenumbers.format_number(
             phonenumbers.parse(phone_number, 'RU'), phonenumbers.PhoneNumberFormat.E164)
+        # необходимо добавить собеседника в контакты, чтобы написать
+        await add_contact(identifier)
     else:
         return None
 
+    peer = await get_peer(identifier)
+    return await telegram_client.send_message(peer, text, file=file, attributes=attributes)
+
+
+async def add_contact(phone_number: str):
+    """ При отправке пользователю по номеру телефона предварительно нужно добавить его в
+        контакты """
+    await telegram_client(functions.contacts.ImportContactsRequest(
+        contacts=[types.InputPhoneContact(
+            client_id=random.randrange(-2 ** 63, 2 ** 63),
+            phone=phone_number,
+            first_name='',
+            last_name=''
+        )]
+    ))
+
+
+async def get_peer(identifier):
+    """ Получение пользователя для отправки сообщения. """
     try:
-        user = await telegram_client.get_entity(identifier)
+        peer = await telegram_client.get_entity(identifier)
     except ValueError:
         raise PeerNotFoundError()
-
-    return await telegram_client.send_message(user, text, file=file, attributes=attributes)
+    return peer
