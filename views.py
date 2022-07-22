@@ -5,7 +5,7 @@ import base64
 from aiohttp import web
 from telethon.tl.types import DocumentAttributeFilename
 
-from telegram.client import send_telegram_message
+from telegram.client import send_telegram_message, TELEGRAM_CLIENTS
 from telegram.exceptions import PeerNotFoundError
 
 
@@ -13,6 +13,11 @@ async def send_message(request):
     """ POST запрос на отправку сообщения """
 
     json_data = await request.json()
+
+    # определяем, от какого пользователя (сессии) будем отправлять сообщение
+    tg_client_identifier = str(json_data['tg_client_identifier'])
+    tg_client = TELEGRAM_CLIENTS[tg_client_identifier]
+
     user = json_data['user']
     text = json_data['text']
     file = None
@@ -25,7 +30,8 @@ async def send_message(request):
         attributes.append(filename)
 
     try:
-        result = await send_telegram_message(user, text, file=file, attributes=attributes)
+        result = await send_telegram_message(user, text, tg_client,
+                                             file=file, attributes=attributes)
         if result:
             data = {
                 "id": result.id,
