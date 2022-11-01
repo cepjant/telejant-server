@@ -5,7 +5,7 @@ import base64
 from aiohttp import web
 from telethon.tl.types import DocumentAttributeFilename
 
-from telegram.client import send_telegram_message, TELEGRAM_CLIENTS
+from telegram.client import send_telegram_message, TELEGRAM_CLIENTS, get_peer_info
 from telegram.exceptions import PeerNotFoundError
 
 
@@ -35,7 +35,7 @@ async def send_message(request):
         if result:
             data = {
                 "id": result.id,
-                "peer_id": result.peer_id.user_id
+                "peer": await get_peer_info(result.peer_id.user_id, tg_client)
             }
             response = {"status": 201, "data": data}
         else:

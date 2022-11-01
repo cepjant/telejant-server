@@ -1,11 +1,13 @@
 """ Обработчики сообщений """
 
-from telegram.message import get_message_content, get_peer_info
+from telegram.message import get_message_content
 
 
 async def private_message_handler(tg_client, message):
     """ Обработчик сообщений, полученных или отправленных в личном чате """
-    peer = await get_peer_info(message, tg_client)
+    from telegram.client import get_peer_info
+
+    peer = await get_peer_info(message.peer_id.user_id, tg_client)
     text, media_content, media_content_description, file_name = await get_message_content(message)
 
     data = {

@@ -69,3 +69,16 @@ async def get_peer(identifier, tg_client):
     except ValueError:
         raise PeerNotFoundError()
     return peer
+
+
+async def get_peer_info(user_id, tg_client) -> dict:
+    """ Получение информации о собеседнике
+        @param user_id: id tg-пользователя, можно получить из объекта message (входящего
+        из handler-a либо исходящего как результат функции tg_client.send_message).peer_id.user_id
+        @param tg_client:
+    """
+
+    peer_fields = ['id', 'bot', 'first_name', 'last_name', 'phone', 'username']
+    peer_entity = await tg_client.get_entity(user_id)
+    peer_info = {field: getattr(peer_entity, field) for field in peer_fields}
+    return peer_info

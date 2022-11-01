@@ -33,17 +33,20 @@ async def main(running_tg_client):
     async def income_handler(event):
         message_data = await client_handler(event, tg_client=running_tg_client)
 
-        # получаем идентификатор клиента, для которого работает клиент телеграма
-        tg_client_identifier = getattr(running_tg_client, 'identifier')
-        # и передаем его вместе с запросом
-        message_data.update({'tg_client_identifier': tg_client_identifier})
-
-        # из настроек окружения берем урл клиента, на который нужно отправлять полученные сообщения
-        target_system_url = next(c['target_system_url'] for c in CLIENTS
-                                 if c['identifier'] == tg_client_identifier)
         if message_data:
-            print(message_data)
-            await session.post(target_system_url, json=message_data)
+            # message_data может быть None, если этот тип диалога не обрабатывается
+
+            # получаем идентификатор клиента, для которого работает клиент телеграма
+            tg_client_identifier = getattr(running_tg_client, 'identifier')
+            # и передаем его вместе с запросом
+            message_data.update({'tg_client_identifier': tg_client_identifier})
+
+            # из настроек окружения берем урл клиента, на который нужно отправлять полученные
+            # сообщения
+            target_system_url = next(c['target_system_url'] for c in CLIENTS
+                                     if c['identifier'] == tg_client_identifier)
+            if message_data:
+                await session.post(target_system_url, json=message_data)
 
 
 if __name__ == '__main__':
