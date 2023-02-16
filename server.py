@@ -8,7 +8,7 @@ from telethon import events
 from settings import CLIENTS
 from middlewares import allowed_hosts_middleware
 from routes import routes
-from telegram.client import TELEGRAM_CLIENTS, client_handler
+from telegram.client import TELEGRAM_CLIENTS, new_message_handler, user_action_handler
 
 app = web.Application(middlewares=[allowed_hosts_middleware, ])
 
@@ -31,7 +31,7 @@ async def main(running_tg_client):
 
     @running_tg_client.on(events.NewMessage())
     async def income_handler(event):
-        message_data = await client_handler(event, tg_client=running_tg_client)
+        message_data = await new_message_handler(event, tg_client=running_tg_client)
 
         if message_data:
             # message_data может быть None, если этот тип диалога не обрабатывается
@@ -45,8 +45,13 @@ async def main(running_tg_client):
             # сообщения
             target_system_url = next(c['target_system_url'] for c in CLIENTS
                                      if c['identifier'] == tg_client_identifier)
-            if message_data:
+
+            if message_data and target_system_url:
                 await session.post(target_system_url, json=message_data)
+
+    @running_tg_client.on(events.UserUpdate())
+    async def income_handler(event):
+        await user_action_handler(event, tg_client=running_tg_client)
 
 
 if __name__ == '__main__':

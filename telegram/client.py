@@ -17,7 +17,7 @@ for client in CLIENTS:
         {client['identifier']: TelegramClient(client['identifier'], int(API_ID), API_HASH)})
 
 
-async def client_handler(event, tg_client):
+async def new_message_handler(event, tg_client):
     """ Общий обработчик сообщений, распределяет в соответствующие функции
         в зависимости от типа сообщения: личного/группового
     """
@@ -27,6 +27,18 @@ async def client_handler(event, tg_client):
     if message.is_private:
         return await private_message_handler(tg_client, message)
     return None
+
+
+async def user_action_handler(event, tg_client):
+    """ Общий обработчик состояний контактов (начали писать, либо сменили статус на `онлайн` """
+    from datetime import datetime
+
+    if event.typing:
+        peer = await get_peer_info(event.user_id, tg_client)
+        print("TYPING:", end='\t')
+        print(peer['username'], 'at', datetime.now())
+    else:
+        pass
 
 
 async def send_telegram_message(user, text, tg_client, file=None, attributes=None):
