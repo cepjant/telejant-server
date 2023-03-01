@@ -3,12 +3,12 @@
 import asyncio
 import aiohttp
 from aiohttp import web
-from telethon import events, TelegramClient
+from telethon import events
 
-from settings import CLIENTS, API_ID, API_HASH
+from settings import CLIENTS
 from middlewares import allowed_hosts_middleware
 from routes import routes
-from telegram.client import client_handler
+from telegram.client import TELEGRAM_CLIENTS, client_handler
 
 app = web.Application(middlewares=[allowed_hosts_middleware, ])
 
@@ -49,19 +49,23 @@ async def main(running_tg_client):
                 await session.post(target_system_url, json=message_data)
 
 
+async def get_password():
+    # websocket?
+    pass
+
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
 
     app.add_routes(routes)
     app.on_shutdown.append(on_shutdown)
 
-    for client in CLIENTS:
-        print("Инициализация клиента '%s'" % client['label'], client['phone_number'])
-        telegram_client = TelegramClient(client['identifier'], int(API_ID), API_HASH)
-        # identifier - уникальное значение клиента, для которого запускается клиент телеграма
-        setattr(telegram_client, 'identifier', client['identifier'])
+    for identifier, telegram_client in TELEGRAM_CLIENTS.items():
+        client = next(c for c in CLIENTS if c['identifier'] == identifier)
+        print("Инициализация клиента '%s'" % client['label'])
 
-        telegram_client.start(phone=client['phone_number'])
+        # identifier - уникальное значение клиента, для которого запускается клиент телеграма
+        setattr(telegram_client, 'identifier', identifier)
+        telegram_client.start(client['phone_number'])
         print("Телеграм клиент '%s' запущен" % client['label'])
         loop.run_until_complete(main(telegram_client))
 
