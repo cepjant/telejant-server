@@ -3,12 +3,12 @@
 import asyncio
 import aiohttp
 from aiohttp import web
-from telethon import events
+from telethon import events, TelegramClient
 
-from settings import CLIENTS
+from settings import CLIENTS, API_ID, API_HASH
 from middlewares import allowed_hosts_middleware
 from routes import routes
-from telegram.client import TELEGRAM_CLIENTS, client_handler
+from telegram.client import client_handler
 
 app = web.Application(middlewares=[allowed_hosts_middleware, ])
 
@@ -55,14 +55,14 @@ if __name__ == '__main__':
     app.add_routes(routes)
     app.on_shutdown.append(on_shutdown)
 
-    for identifier, telegram_client in TELEGRAM_CLIENTS.items():
-        tg_client_label = next(c['label'] for c in CLIENTS if c['identifier'] == identifier)
-        print("Инициализация клиента '%s'" % tg_client_label)
-
+    for client in CLIENTS:
+        print("Инициализация клиента '%s'" % client['label'], client['phone_number'])
+        telegram_client = TelegramClient(client['identifier'], int(API_ID), API_HASH)
         # identifier - уникальное значение клиента, для которого запускается клиент телеграма
-        setattr(telegram_client, 'identifier', identifier)
-        telegram_client.start()
-        print("Телеграм клиент '%s' запущен" % tg_client_label)
+        setattr(telegram_client, 'identifier', client['identifier'])
+
+        telegram_client.start(phone=client['phone_number'])
+        print("Телеграм клиент '%s' запущен" % client['label'])
         loop.run_until_complete(main(telegram_client))
 
     web.run_app(app, loop=loop)
