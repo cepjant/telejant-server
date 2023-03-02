@@ -49,9 +49,10 @@ async def main(running_tg_client):
                 await session.post(target_system_url, json=message_data)
 
 
-async def get_password():
-    # websocket?
-    pass
+async def get_passcode():
+    print('getting passcode')
+    return '123121'
+
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
@@ -65,7 +66,9 @@ if __name__ == '__main__':
 
         # identifier - уникальное значение клиента, для которого запускается клиент телеграма
         setattr(telegram_client, 'identifier', identifier)
-        telegram_client.start(client['phone_number'])
+
+        # client['identifier'] -- номер телефоне, code_callback - функция, которая вернет passcode
+        telegram_client.start(client['identifier'], code_callback=get_passcode)
         print("Телеграм клиент '%s' запущен" % client['label'])
         loop.run_until_complete(main(telegram_client))
 
