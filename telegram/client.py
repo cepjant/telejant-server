@@ -1,5 +1,6 @@
 """ Клиент телеграм - получение и отправка сообщений """
 
+import aiohttp
 import phonenumbers
 import random
 from telethon import TelegramClient
@@ -82,3 +83,36 @@ async def get_peer_info(user_id, tg_client) -> dict:
     peer_entity = await tg_client.get_entity(user_id)
     peer_info = {field: getattr(peer_entity, field) for field in peer_fields}
     return peer_info
+
+
+async def serve_client(running_tg_client):
+    """ Установка соединения с сервисом посредником и объявление обработчиков событий
+     из телеграма """
+
+    from server import app
+    from telethon import events
+
+    session = aiohttp.ClientSession()
+    app['sessions'] = app.get('sessions', [])
+    app['sessions'].append(session)  # app должен хранить сессии, чтобы при останове app
+
+    # закрыть сессию
+
+    @running_tg_client.on(events.NewMessage())
+    async def income_handler(event):
+        message_data = await client_handler(event, tg_client=running_tg_client)
+
+        if message_data:
+            # message_data может быть None, если этот тип диалога не обрабатывается
+
+            # получаем идентификатор клиента, для которого работает клиент телеграма
+            tg_client_identifier = getattr(running_tg_client, 'identifier')
+            # и передаем его вместе с запросом
+            message_data.update({'tg_client_identifier': tg_client_identifier})
+
+            # из настроек окружения берем урл клиента, на который нужно отправлять полученные
+            # сообщения
+            target_system_url = next(c['target_system_url'] for c in CLIENTS
+                                     if c['identifier'] == tg_client_identifier)
+            if message_data:
+                await session.post(target_system_url, json=message_data)

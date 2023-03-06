@@ -45,3 +45,39 @@ async def send_message(request):
         response = {"status": 400, "data": {"error": "PeerNotFound"}}
 
     return web.json_response(**response)
+
+
+async def start_new_session(request):
+    """ Принимает запрос на создание новой сессии """
+    import asyncio
+    from settings import API_ID, API_HASH, CLIENTS
+    from telethon import TelegramClient
+
+    from telegram.client import serve_client
+
+    new_loop = asyncio.new_event_loop()
+
+    def get_passcode():
+        print('getting passcode')
+        return '123121'
+
+    json_data = await request.json()
+
+    tg_client_identifier = str(json_data['tg_client_identifier'])
+    telegram_client = TelegramClient(tg_client_identifier, int(API_ID), API_HASH)
+
+    phone_number = json_data['phone_number']
+    outer_service_url = json_data['endpoint_url']
+
+    print("Инициализация клиента '%s'" % phone_number)
+
+    # identifier - уникальное значение клиента, для которого запускается клиент телеграма
+    setattr(telegram_client, 'identifier', tg_client_identifier)
+
+
+    # client['identifier'] -- номер телефоне, code_callback - функция, которая вернет passcode
+    # telegram_client.start(phone_number, code_callback=None)
+    await new_loop.run_in_executor(None, telegram_client.start, phone_number)
+    print("Телеграм клиент '%s' запущен" % phone_number)
+    new_loop.create_task(serve_client(telegram_client))
+
