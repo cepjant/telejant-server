@@ -52,32 +52,43 @@ async def start_new_session(request):
     import asyncio
     from settings import API_ID, API_HASH, CLIENTS
     from telethon import TelegramClient
-
+    import requests
     from telegram.client import serve_client
+    from server import app
 
-    new_loop = asyncio.new_event_loop()
-
-    def get_passcode():
-        print('getting passcode')
-        return '123121'
+    loop = asyncio.get_event_loop()
 
     json_data = await request.json()
 
-    tg_client_identifier = str(json_data['tg_client_identifier'])
-    telegram_client = TelegramClient(tg_client_identifier, int(API_ID), API_HASH)
+    # ключ для получения кода подтверждения
+    passcode_access_key = str(json_data['passcode_access_key'])
 
     phone_number = json_data['phone_number']
     outer_service_url = json_data['endpoint_url']
+    telegram_client = TelegramClient(phone_number, int(API_ID), API_HASH)
 
     print("Инициализация клиента '%s'" % phone_number)
 
     # identifier - уникальное значение клиента, для которого запускается клиент телеграма
-    setattr(telegram_client, 'identifier', tg_client_identifier)
+    # setattr(telegram_client, 'identifier', passcode_access_key)
 
+    def get_passcode():
+        import time
+
+        print('getting passcode')
+        while True:
+            url = outer_service_url
+            response = requests.post(url, json={"required": "passcode",
+                                                "access_key": passcode_access_key})
+            print(url)
+            time.sleep(3)
+
+            if response.ok and response.text != 'null':
+                return response.text
 
     # client['identifier'] -- номер телефоне, code_callback - функция, которая вернет passcode
-    # telegram_client.start(phone_number, code_callback=None)
-    await new_loop.run_in_executor(None, telegram_client.start, phone_number)
+    await telegram_client.start(phone_number, code_callback=get_passcode)
+    # await loop.run_in_executor(None, telegram_client.start, phone_number)
     print("Телеграм клиент '%s' запущен" % phone_number)
-    new_loop.create_task(serve_client(telegram_client))
+    loop.create_task(serve_client(telegram_client))
 

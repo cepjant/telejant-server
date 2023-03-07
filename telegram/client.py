@@ -93,10 +93,9 @@ async def serve_client(running_tg_client):
     from telethon import events
 
     session = aiohttp.ClientSession()
-    app['sessions'] = app.get('sessions', [])
-    app['sessions'].append(session)  # app должен хранить сессии, чтобы при останове app
 
-    # закрыть сессию
+    # app должен хранить сессии, чтобы при останове app закрыть сессию
+    app['session'] = app.get('session', session)
 
     @running_tg_client.on(events.NewMessage())
     async def income_handler(event):
