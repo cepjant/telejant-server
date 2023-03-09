@@ -18,7 +18,7 @@ for client in CLIENTS:
         {client['identifier']: TelegramClient(client['identifier'], int(API_ID), API_HASH)})
 
 
-async def client_handler(event, tg_client):
+async def new_message_handler(event, tg_client):
     """ Общий обработчик сообщений, распределяет в соответствующие функции
         в зависимости от типа сообщения: личного/группового
     """
@@ -86,24 +86,19 @@ async def get_peer_info(user_id, tg_client) -> dict:
 
 
 async def serve_client(running_tg_client):
-    """ Установка соединения с сервисом посредником и объявление обработчиков событий
-     из телеграма """
+    """ Объявление обработчиков событий из телеграма """
 
     from server import app
     from telethon import events
 
-    session = aiohttp.ClientSession()
-
-    # app должен хранить сессии, чтобы при останове app закрыть сессию
-    app['session'] = app.get('session', session)
-
     @running_tg_client.on(events.NewMessage())
     async def income_handler(event):
-        message_data = await client_handler(event, tg_client=running_tg_client)
+        message_data = await new_message_handler(event, tg_client=running_tg_client)
 
         if message_data:
             # message_data может быть None, если этот тип диалога не обрабатывается
 
+            print(getattr(running_tg_client, 'test'))
             # получаем идентификатор клиента, для которого работает клиент телеграма
             tg_client_identifier = getattr(running_tg_client, 'identifier')
             # и передаем его вместе с запросом
@@ -114,4 +109,4 @@ async def serve_client(running_tg_client):
             target_system_url = next(c['target_system_url'] for c in CLIENTS
                                      if c['identifier'] == tg_client_identifier)
             if message_data:
-                await session.post(target_system_url, json=message_data)
+                await app['session'].post(target_system_url, json=message_data)
