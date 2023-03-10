@@ -96,17 +96,12 @@ async def serve_client(running_tg_client):
         message_data = await new_message_handler(event, tg_client=running_tg_client)
 
         if message_data:
-            # message_data может быть None, если этот тип диалога не обрабатывается
+            outer_service_url = getattr(running_tg_client, 'outer_service_url')
+            phone_number = getattr(running_tg_client, 'phone_number')
+            message_data.update({'self_phone_number': phone_number})
 
-            print(getattr(running_tg_client, 'test'))
-            # получаем идентификатор клиента, для которого работает клиент телеграма
             tg_client_identifier = getattr(running_tg_client, 'identifier')
-            # и передаем его вместе с запросом
             message_data.update({'tg_client_identifier': tg_client_identifier})
 
-            # из настроек окружения берем урл клиента, на который нужно отправлять полученные
-            # сообщения
-            target_system_url = next(c['target_system_url'] for c in CLIENTS
-                                     if c['identifier'] == tg_client_identifier)
             if message_data:
-                await app['session'].post(target_system_url, json=message_data)
+                await app['session'].post(outer_service_url, json=message_data)

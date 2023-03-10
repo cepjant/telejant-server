@@ -64,13 +64,17 @@ async def start_new_session(request):
 
     phone_number = json_data['phone_number']
     outer_service_url = json_data['endpoint_url']
+
     telegram_client = TelegramClient(phone_number, int(API_ID), API_HASH)
-    setattr(telegram_client, 'test', 'test')
+    setattr(telegram_client, 'outer_service_url', outer_service_url)
+    setattr(telegram_client, 'phone_number', phone_number)
 
     print("Инициализация клиента '%s'" % phone_number)
 
     # identifier - уникальное значение клиента, для которого запускается клиент телеграма
     # setattr(telegram_client, 'identifier', passcode_access_key)
+
+    received_passcodes = []
 
     def get_passcode():
         import time
@@ -82,7 +86,11 @@ async def start_new_session(request):
             time.sleep(3)
 
             if response.ok and response.text != 'null':
-                return response.text
+                passcode = response.text
+                if passcode not in received_passcodes:
+                    # если мы уже пробовали этот passcode, он неверный -> ожидаем другой
+                    received_passcodes.append(passcode)
+                    return response.text
 
     await telegram_client.start(phone_number, code_callback=get_passcode)
     print("Телеграм клиент '%s' запущен" % phone_number)
