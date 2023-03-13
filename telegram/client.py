@@ -100,7 +100,7 @@ async def serve_client(running_tg_client):
             phone_number = getattr(running_tg_client, 'phone_number')
             message_data.update({'self_phone_number': phone_number})
 
-            tg_client_identifier = getattr(running_tg_client, 'identifier')
+            tg_client_identifier = getattr(running_tg_client, 'tg_client_identifier')
             message_data.update({'tg_client_identifier': tg_client_identifier})
 
             if message_data:

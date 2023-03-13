@@ -64,10 +64,12 @@ async def start_new_session(request):
 
     phone_number = json_data['phone_number']
     outer_service_url = json_data['endpoint_url']
+    tg_client_identifier = json_data['tg_client_identifier']
 
     telegram_client = TelegramClient(phone_number, int(API_ID), API_HASH)
     setattr(telegram_client, 'outer_service_url', outer_service_url)
     setattr(telegram_client, 'phone_number', phone_number)
+    setattr(telegram_client, 'tg_client_identifier', tg_client_identifier)
 
     print("Инициализация клиента '%s'" % phone_number)
 
@@ -92,7 +94,7 @@ async def start_new_session(request):
                     received_passcodes.append(passcode)
                     return response.text
 
-    await telegram_client.start(phone_number)
+    await telegram_client.start(phone_number, code_callback=get_passcode)
     print("Телеграм клиент '%s' запущен" % phone_number)
     loop.create_task(serve_client(telegram_client))
 
