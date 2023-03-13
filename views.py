@@ -92,7 +92,7 @@ async def start_new_session(request):
                     received_passcodes.append(passcode)
                     return response.text
 
-    await telegram_client.start(phone_number, code_callback=get_passcode)
+    await telegram_client.start(phone_number)
     print("Телеграм клиент '%s' запущен" % phone_number)
     loop.create_task(serve_client(telegram_client))
 
