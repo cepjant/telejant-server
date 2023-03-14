@@ -65,6 +65,10 @@ async def add_contact(phone_number: str, tg_client):
 
 async def get_peer(identifier, tg_client):
     """ Получение пользователя для отправки сообщения. """
+
+    # This part is IMPORTANT, because it fills the entity cache.
+    await tg_client.get_dialogs()
+
     try:
         peer = await tg_client.get_entity(identifier)
     except ValueError:
@@ -72,36 +76,39 @@ async def get_peer(identifier, tg_client):
     return peer
 
 
-async def get_peer_info(user_id, tg_client) -> dict:
+async def get_peer_info(peer_id, tg_client) -> dict:
     """ Получение информации о собеседнике
-        @param user_id: id tg-пользователя, можно получить из объекта message (входящего
-        из handler-a либо исходящего как результат функции tg_client.send_message).peer_id.user_id
+        @param peer_id: собеседник
         @param tg_client:
     """
 
     peer_fields = ['id', 'bot', 'first_name', 'last_name', 'phone', 'username']
-    peer_entity = await tg_client.get_entity(user_id)
-    peer_info = {field: getattr(peer_entity, field) for field in peer_fields}
+
+    try:
+        peer_entity = await tg_client.get_entity(peer_id)
+    except ValueError:
+        # не удалось получить пользователя
+        peer_info = {'id': peer_id}
+    else:
+        peer_info = {field: getattr(peer_entity, field) for field in peer_fields}
     return peer_info
 
 
-async def serve_client(running_tg_client):
+async def serve_client(running_tg_client, app):
     """ Объявление обработчиков событий из телеграма """
 
-    from server import app
     from telethon import events
 
-    @running_tg_client.on(events.NewMessage())
+    @running_tg_client.on(events.NewMessage(incoming=True))
     async def income_handler(event):
         message_data = await new_message_handler(event, tg_client=running_tg_client)
 
         if message_data:
             outer_service_url = getattr(running_tg_client, 'outer_service_url')
-            phone_number = getattr(running_tg_client, 'phone_number')
-            message_data.update({'self_phone_number': phone_number})
 
             tg_client_identifier = getattr(running_tg_client, 'tg_client_identifier')
             message_data.update({'tg_client_identifier': tg_client_identifier})
 
             if message_data:
+                print(message_data)
                 await app['session'].post(outer_service_url, json=message_data)

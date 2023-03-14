@@ -16,41 +16,48 @@ async def send_message(request):
 
     # определяем, от какого пользователя (сессии) будем отправлять сообщение
     tg_client_identifier = str(json_data['tg_client_identifier'])
-    tg_client = TELEGRAM_CLIENTS[tg_client_identifier]
 
-    user = json_data['user']
-    text = json_data['text']
-    file = None
-    attributes = []
+    app_telegram_clients = getattr(request.app, 'telegram_clients', {})
+    tg_client = app_telegram_clients.get(tg_client_identifier)
 
-    media_content = json_data.get('media_content')
-    if media_content:
-        file = base64.b64decode(media_content)
-        filename = DocumentAttributeFilename(json_data.get('file_name'))
-        attributes.append(filename)
+    if tg_client:
+        user = json_data['user']
+        text = json_data['text']
+        file = None
+        attributes = []
 
-    try:
-        result = await send_telegram_message(user, text, tg_client,
-                                             file=file, attributes=attributes)
-        if result:
-            data = {
-                "id": result.id,
-                "peer": await get_peer_info(result.peer_id.user_id, tg_client)
-            }
-            response = {"status": 201, "data": data}
-        else:
-            response = {"status": 500}
-    except PeerNotFoundError:
-        # пользователь для отправки сообщения не найден
-        response = {"status": 400, "data": {"error": "PeerNotFound"}}
+        media_content = json_data.get('media_content')
+        if media_content:
+            file = base64.b64decode(media_content)
+            filename = DocumentAttributeFilename(json_data.get('file_name'))
+            attributes.append(filename)
 
+        try:
+            result = await send_telegram_message(user, text, tg_client,
+                                                 file=file, attributes=attributes)
+            if result:
+                data = {
+                    "id": result.id,
+                    "peer": await get_peer_info(result.peer_id.user_id, tg_client)
+                }
+                response = {"status": 201, "data": data}
+            else:
+                response = {"status": 500}
+        except PeerNotFoundError:
+            # пользователь для отправки сообщения не найден
+            response = {"status": 400, "data": {"error": "PeerNotFound"}}
+    else:
+        # телеграм клиент, с которого нужно отправить сообщение, не найден
+        response = {"status": 400, "data": {"error": "TelegramClientNotFound"}}
+
+    print(response)
     return web.json_response(**response)
 
 
 async def start_new_session(request):
     """ Принимает запрос на создание новой сессии """
     import asyncio
-    from settings import API_ID, API_HASH, CLIENTS
+    from settings import API_ID, API_HASH
     from telethon import TelegramClient
     import requests
     from telegram.client import serve_client
@@ -70,6 +77,10 @@ async def start_new_session(request):
     setattr(telegram_client, 'outer_service_url', outer_service_url)
     setattr(telegram_client, 'phone_number', phone_number)
     setattr(telegram_client, 'tg_client_identifier', tg_client_identifier)
+
+    app_telegram_clients = getattr(request.app, 'telegram_clients', {})
+    app_telegram_clients[tg_client_identifier] = telegram_client
+    setattr(request.app, 'telegram_clients', app_telegram_clients)
 
     print("Инициализация клиента '%s'" % phone_number)
 
@@ -96,5 +107,5 @@ async def start_new_session(request):
 
     await telegram_client.start(phone_number, code_callback=get_passcode)
     print("Телеграм клиент '%s' запущен" % phone_number)
-    loop.create_task(serve_client(telegram_client))
+    loop.create_task(serve_client(telegram_client, app=request.app))
 
