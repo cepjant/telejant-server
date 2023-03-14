@@ -2,7 +2,7 @@
 
 from aiohttp import web
 
-from views import send_message, start_new_session
+from handlers import send_message, start_new_session
 
 routes = [
     web.post('/send_message/', send_message),

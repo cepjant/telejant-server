@@ -4,10 +4,8 @@ import asyncio
 import aiohttp
 from aiohttp import web
 
-from settings import CLIENTS
 from middlewares import allowed_hosts_middleware
 from routes import routes
-from telegram.client import TELEGRAM_CLIENTS, new_message_handler
 
 app = web.Application(middlewares=[allowed_hosts_middleware, ])
 

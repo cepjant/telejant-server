@@ -20,3 +20,15 @@ async def private_message_handler(tg_client, message):
         'direction': 'outcome' if message.out else 'income'
     }
     return data
+
+
+async def new_message_handler(event, tg_client):
+    """ Общий обработчик сообщений, распределяет в соответствующие функции
+        в зависимости от типа сообщения: личного/группового
+    """
+
+    message = event.message
+
+    if message.is_private:
+        return await private_message_handler(tg_client, message)
+    return None

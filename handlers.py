@@ -1,11 +1,15 @@
-""" Функции-обработчики запросов на сервер """
+""" Функции-обработчики запросов на web сервер """
 
 import base64
 
 from aiohttp import web
+import asyncio
+import requests
+from telethon import TelegramClient
 from telethon.tl.types import DocumentAttributeFilename
 
-from telegram.client import send_telegram_message, TELEGRAM_CLIENTS, get_peer_info
+from settings import API_ID, API_HASH
+from telegram.client import send_telegram_message, get_peer_info, add_client_handlers
 from telegram.exceptions import PeerNotFoundError
 
 
@@ -17,6 +21,7 @@ async def send_message(request):
     # определяем, от какого пользователя (сессии) будем отправлять сообщение
     tg_client_identifier = str(json_data['tg_client_identifier'])
 
+    # ищем, добавлен ли переданный клиент в работающее приложение
     app_telegram_clients = getattr(request.app, 'telegram_clients', {})
     tg_client = app_telegram_clients.get(tg_client_identifier)
 
@@ -33,12 +38,12 @@ async def send_message(request):
             attributes.append(filename)
 
         try:
-            result = await send_telegram_message(user, text, tg_client,
+            message = await send_telegram_message(user, text, tg_client,
                                                  file=file, attributes=attributes)
-            if result:
+            if message:
                 data = {
-                    "id": result.id,
-                    "peer": await get_peer_info(result.peer_id.user_id, tg_client)
+                    "id": message.id,
+                    "peer": await get_peer_info(message.peer_id.user_id, tg_client)
                 }
                 response = {"status": 201, "data": data}
             else:
@@ -56,13 +61,6 @@ async def send_message(request):
 
 async def start_new_session(request):
     """ Принимает запрос на создание новой сессии """
-    import asyncio
-    from settings import API_ID, API_HASH
-    from telethon import TelegramClient
-    import requests
-    from telegram.client import serve_client
-
-    loop = asyncio.get_event_loop()
 
     json_data = await request.json()
 
@@ -73,23 +71,22 @@ async def start_new_session(request):
     outer_service_url = json_data['endpoint_url']
     tg_client_identifier = json_data['tg_client_identifier']
 
+    # вешаем на ТГ клиент необходимые данные для связи с внешним сервисом
     telegram_client = TelegramClient(phone_number, int(API_ID), API_HASH)
     setattr(telegram_client, 'outer_service_url', outer_service_url)
-    setattr(telegram_client, 'phone_number', phone_number)
     setattr(telegram_client, 'tg_client_identifier', tg_client_identifier)
 
+    # в приложение веб сервера добавляем созданный ТГ клиент
     app_telegram_clients = getattr(request.app, 'telegram_clients', {})
     app_telegram_clients[tg_client_identifier] = telegram_client
     setattr(request.app, 'telegram_clients', app_telegram_clients)
 
     print("Инициализация клиента '%s'" % phone_number)
 
-    # identifier - уникальное значение клиента, для которого запускается клиент телеграма
-    # setattr(telegram_client, 'identifier', passcode_access_key)
-
     received_passcodes = []
 
     def get_passcode():
+        """ Получение кода подтверждения для создания сессии """
         import time
 
         while True:
@@ -101,11 +98,13 @@ async def start_new_session(request):
             if response.ok and response.text != 'null':
                 passcode = response.text
                 if passcode not in received_passcodes:
-                    # если мы уже пробовали этот passcode, он неверный -> ожидаем другой
+                    # если мы уже пробовали этот passcode и он неверный -> ожидаем другой
                     received_passcodes.append(passcode)
                     return response.text
 
     await telegram_client.start(phone_number, code_callback=get_passcode)
     print("Телеграм клиент '%s' запущен" % phone_number)
-    loop.create_task(serve_client(telegram_client, app=request.app))
+
+    loop = asyncio.get_event_loop()
+    loop.create_task(add_client_handlers(telegram_client, app=request.app))
 

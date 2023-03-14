@@ -1,33 +1,11 @@
 """ Клиент телеграм - получение и отправка сообщений """
 
-import aiohttp
 import phonenumbers
 import random
-from telethon import TelegramClient
 from telethon import functions, types
 
-from settings import API_ID, API_HASH, CLIENTS
 from telegram.exceptions import PeerNotFoundError
-from telegram.handlers import private_message_handler
-
-# пользователи телеграм, у каждого свой идентификатор и свой экземпляр клиента телеграма
-# (своя сессия)
-TELEGRAM_CLIENTS = {}
-for client in CLIENTS:
-    TELEGRAM_CLIENTS.update(
-        {client['identifier']: TelegramClient(client['identifier'], int(API_ID), API_HASH)})
-
-
-async def new_message_handler(event, tg_client):
-    """ Общий обработчик сообщений, распределяет в соответствующие функции
-        в зависимости от типа сообщения: личного/группового
-    """
-
-    message = event.message
-
-    if message.is_private:
-        return await private_message_handler(tg_client, message)
-    return None
+from telegram.handlers import new_message_handler
 
 
 async def send_telegram_message(user, text, tg_client, file=None, attributes=None):
@@ -94,7 +72,7 @@ async def get_peer_info(peer_id, tg_client) -> dict:
     return peer_info
 
 
-async def serve_client(running_tg_client, app):
+async def add_client_handlers(running_tg_client, app):
     """ Объявление обработчиков событий из телеграма """
 
     from telethon import events
