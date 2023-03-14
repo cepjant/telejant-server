@@ -39,7 +39,7 @@ async def send_message(request):
 
         try:
             message = await send_telegram_message(user, text, tg_client,
-                                                 file=file, attributes=attributes)
+                                                  file=file, attributes=attributes)
             if message:
                 data = {
                     "id": message.id,
@@ -55,7 +55,6 @@ async def send_message(request):
         # телеграм клиент, с которого нужно отправить сообщение, не найден
         response = {"status": 400, "data": {"error": "TelegramClientNotFound"}}
 
-    print(response)
     return web.json_response(**response)
 
 
