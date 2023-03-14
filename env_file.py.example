@@ -4,15 +4,8 @@
 API_ID = int
 API_HASH = str
 
-# URL, на который нужно отправлять полученные сообщения
-TARGET_SYSTEM_URL = "http://127.0.0.1:8000/api/notif/telegram/"
-
 # максимальный размер файла для отправки на сторонний сервер - 1536
 MAX_UPLOAD_FILE_SIZE_KB = 1536
 
+# с каких адресов можно будет общаться с сервисом
 ALLOWED_HOSTS = ['127.0.0.1', ]
-
-CLIENTS = [
-    {"identifier": guid, "target_system_url": TARGET_SYSTEM_URL,
-     "label": "название"},
-]
