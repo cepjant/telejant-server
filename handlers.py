@@ -78,6 +78,11 @@ async def start_new_session(request):
 
     # в приложение веб сервера добавляем созданный ТГ клиент
     app_telegram_clients = getattr(request.app, 'telegram_clients', {})
+
+    if app_telegram_clients.get(tg_client_identifier):
+        response = {"status": 400, "data": {"error": "TelegramClientIsAlreadyRunning"}}
+        return web.json_response(**response)
+
     app_telegram_clients[tg_client_identifier] = telegram_client
     setattr(request.app, 'telegram_clients', app_telegram_clients)
 
@@ -108,3 +113,19 @@ async def start_new_session(request):
     loop = asyncio.get_event_loop()
     loop.create_task(add_client_handlers(telegram_client, app=request.app))
 
+
+async def get_telegram_client_status(request):
+    """ Возвращает статус клиента телеграм, GUID которого передан в GET параметре
+        telegram_guid """
+
+    telegram_guid = request.rel_url.query['telegram_guid']
+
+    app_telegram_clients = getattr(request.app, 'telegram_clients', {})
+
+    if app_telegram_clients.get(telegram_guid):
+        telegram_client = app_telegram_clients[telegram_guid]
+        telegram_client_status = 'Connected' if telegram_client.is_connected() else 'Disconnected'
+        response = {"status": 200, "data": {"telegram_client_status": telegram_client_status}}
+    else:
+        response = {"status": 200, "data": {"telegram_client_status": 'NotFound'}}
+    return web.json_response(**response)
