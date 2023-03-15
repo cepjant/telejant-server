@@ -3,6 +3,7 @@
 import base64
 
 from aiohttp import web
+import aiohttp
 import asyncio
 import requests
 from telethon import TelegramClient
@@ -89,22 +90,25 @@ async def start_new_session(request):
 
     received_passcodes = []
 
-    def get_passcode():
+    # сессия для связи с посредником
+    session = getattr(request.app, 'session', aiohttp.ClientSession())
+    setattr(request.app, 'session', session)
+
+    async def get_passcode():
         """ Получение кода подтверждения для создания сессии """
-        import time
 
-        while True:
-            url = outer_service_url
-            response = requests.post(url, json={"required": "passcode",
-                                                "access_key": passcode_access_key})
-            time.sleep(3)
+        url = outer_service_url
+        resp = await session.post(
+            url, json={"required": "passcode", "access_key": passcode_access_key})
 
-            if response.ok and response.text != 'null':
-                passcode = response.text
-                if passcode not in received_passcodes:
-                    # если мы уже пробовали этот passcode и он неверный -> ожидаем другой
-                    received_passcodes.append(passcode)
-                    return response.text
+        await asyncio.sleep(3)
+
+        result = await resp.text()
+        if resp.ok and result != 'null':
+            if result not in received_passcodes:
+                # если мы уже пробовали этот passcode и он неверный -> ожидаем другой
+                received_passcodes.append(result)
+                return result
 
     await telegram_client.start(phone_number, code_callback=get_passcode)
     print("Телеграм клиент '%s' запущен" % phone_number)

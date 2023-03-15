@@ -1,7 +1,6 @@
 """ Запуск сервера и клиента телеграм """
 
 import asyncio
-import aiohttp
 from aiohttp import web
 
 from middlewares import allowed_hosts_middleware
@@ -19,9 +18,5 @@ if __name__ == '__main__':
 
     app.add_routes(routes)
     app.on_shutdown.append(on_shutdown)
-
-    # сессия для связи с посредником
-    session = aiohttp.ClientSession()
-    app['session'] = app.get('session', session)
 
     web.run_app(app, loop=loop)
