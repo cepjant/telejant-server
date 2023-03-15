@@ -4,6 +4,7 @@ import base64
 
 from aiohttp import web
 import asyncio
+from pathlib import Path
 import requests
 from telethon import TelegramClient
 from telethon.tl.types import DocumentAttributeFilename
@@ -70,8 +71,10 @@ async def start_new_session(request):
     outer_service_url = json_data['endpoint_url']
     tg_client_identifier = json_data['tg_client_identifier']
 
+    telegram_client = TelegramClient(str(Path("telegram/sessions/" + tg_client_identifier)),
+                                     int(API_ID), API_HASH)
+
     # вешаем на ТГ клиент необходимые данные для связи с внешним сервисом
-    telegram_client = TelegramClient(phone_number, int(API_ID), API_HASH)
     setattr(telegram_client, 'outer_service_url', outer_service_url)
     setattr(telegram_client, 'tg_client_identifier', tg_client_identifier)
 

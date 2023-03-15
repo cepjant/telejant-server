@@ -3,6 +3,7 @@
 import asyncio
 import aiohttp
 from aiohttp import web
+from pathlib import Path
 
 from middlewares import allowed_hosts_middleware
 from routes import routes
@@ -23,5 +24,8 @@ if __name__ == '__main__':
     # сессия для связи с посредником
     session = aiohttp.ClientSession()
     app['session'] = app.get('session', session)
+
+    # проверяем что директория для хранения телеграм сессий создана или создаем ее
+    Path("telegram/sessions").mkdir(exist_ok=True)
 
     web.run_app(app, loop=loop)
