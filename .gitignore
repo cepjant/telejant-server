@@ -3,3 +3,4 @@ env_file.py
 *.session*
 .idea
 __pycache__
+.vscode

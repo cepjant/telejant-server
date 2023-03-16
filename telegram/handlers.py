@@ -3,7 +3,7 @@
 from telegram.message import get_message_content
 
 
-async def private_message_handler(tg_client, message):
+async def _private_message_handler(tg_client, message):
     """ Обработчик сообщений, полученных или отправленных в личном чате """
     from telegram.client import get_peer_info
 
@@ -30,5 +30,5 @@ async def new_message_handler(event, tg_client):
     message = event.message
 
     if message.is_private:
-        return await private_message_handler(tg_client, message)
+        return await _private_message_handler(tg_client, message)
     return None

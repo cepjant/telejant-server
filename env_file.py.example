@@ -9,3 +9,6 @@ MAX_UPLOAD_FILE_SIZE_KB = 1536
 
 # с каких адресов можно будет общаться с сервисом
 ALLOWED_HOSTS = ['127.0.0.1', ]
+
+# URL, на который нужно отправлять полученные сообщения
+TARGET_SYSTEM_URL = "http://127.0.0.1:8000/api/notif/telegram/"

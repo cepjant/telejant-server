@@ -6,6 +6,7 @@ from pathlib import Path
 
 from middlewares import allowed_hosts_middleware
 from routes import routes
+from telegram.core import start_sessions_from_files
 
 
 async def on_shutdown(application):
@@ -14,6 +15,8 @@ async def on_shutdown(application):
 
 
 async def on_startup(application):
+    """ Обработчик запуска сервера """
+
     # проверяем что директория для хранения телеграм сессий создана или создаем ее
     Path("telegram/sessions").mkdir(exist_ok=True)
 
@@ -23,6 +26,8 @@ async def on_startup(application):
 
     application.add_routes(routes)
     application.on_shutdown.append(on_shutdown)
+
+    await start_sessions_from_files()
 
 
 if __name__ == '__main__':

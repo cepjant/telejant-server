@@ -14,7 +14,7 @@ from telegram.client import send_telegram_message, get_peer_info, add_client_han
 from telegram.exceptions import PeerNotFoundError
 
 
-async def send_message(request):
+async def send_message_handler(request):
     """ POST запрос на отправку сообщения """
 
     json_data = await request.json()
@@ -59,7 +59,7 @@ async def send_message(request):
     return web.json_response(**response)
 
 
-async def start_new_session(request):
+async def start_new_session_handler(request):
     """ Принимает запрос на создание новой сессии """
 
     json_data = await request.json()
