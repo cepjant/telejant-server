@@ -27,7 +27,7 @@ async def on_startup(application):
     application.add_routes(routes)
     application.on_shutdown.append(on_shutdown)
 
-    await start_sessions_from_files(application)
+    # await start_sessions_from_files(application)
 
 
 if __name__ == '__main__':
