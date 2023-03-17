@@ -1,5 +1,6 @@
 """ Клиент телеграм - получение и отправка сообщений """
 
+import asyncio
 from pathlib import Path
 import phonenumbers
 import random
@@ -95,7 +96,8 @@ async def add_client_handlers(running_tg_client, app):
                 await app['session'].post(outer_service_url, json=message_data)
 
 
-async def start_new_session(app, tg_client_identifier, phone_number):
+async def start_new_session(app, tg_client_identifier, phone_number,
+                            passcode_access_key=None):
     """ Запускает новую сессиию телеграм 
     
         @param app: Экземпляр запущенного приложения aiohttp.web.Application
@@ -113,38 +115,50 @@ async def start_new_session(app, tg_client_identifier, phone_number):
     setattr(telegram_client, 'outer_service_url', outer_service_url)
     setattr(telegram_client, 'tg_client_identifier', tg_client_identifier)
 
-    # в приложение веб сервера добавляем созданный ТГ клиент
     app_telegram_clients = getattr(app, 'telegram_clients', {})
 
     if app_telegram_clients.get(tg_client_identifier):
-        response = {"status": 400, "data": {"error": "TelegramClientIsAlreadyRunning"}}
-        return web.json_response(**response)
-
-    app_telegram_clients[tg_client_identifier] = telegram_client
-    setattr(app, 'telegram_clients', app_telegram_clients)
+        telegram_client = app_telegram_clients.get(tg_client_identifier)
+        if telegram_client.is_connected():
+            # если телеграм клиент уже запущен, выходим из функции
+            return None
 
     print("Инициализация клиента '%s'" % phone_number)
 
-    received_passcodes = []
+    if passcode_access_key:
+        received_passcodes = []
 
-    def get_passcode():
-        """ Получение кода подтверждения для создания сессии """
-        import time
+        def get_passcode():
+            """ Получение кода подтверждения для создания сессии """
+            import time
 
-        while True:
-            url = outer_service_url
-            response = requests.post(url, json={"required": "passcode",
-                                                "access_key": passcode_access_key})
-            time.sleep(3)
+            while True:
+                url = outer_service_url
+                response = requests.post(url, json={"required": "passcode",
+                                                    "access_key": passcode_access_key})
+                time.sleep(3)
 
-            if response.ok and response.text != 'null':
-                passcode = response.text
-                if passcode not in received_passcodes:
-                    # если мы уже пробовали этот passcode и он неверный -> ожидаем другой
-                    received_passcodes.append(passcode)
-                    return response.text
+                if response.ok and response.text != 'null':
+                    passcode = response.text
+                    if passcode not in received_passcodes:
+                        # если мы уже пробовали этот passcode и он неверный -> ожидаем другой
+                        received_passcodes.append(passcode)
+                        return response.text
 
-    await telegram_client.start(phone_number, code_callback=get_passcode)
+        await telegram_client.start(phone_number, code_callback=get_passcode)
+    else:
+        # если не передан ключ для получения кода подтверждения, пробуем
+        # запустить сессию без проверки кода (если файл сессии уже создан )
+        try:
+            await telegram_client.start(phone_number, max_attempts=0)
+        except RuntimeError:
+            # не смогли авторизоваться без кода подтверждения
+            pass
+
+    # в приложение веб сервера добавляем созданный ТГ клиент
+    app_telegram_clients[tg_client_identifier] = telegram_client
+    setattr(app, 'telegram_clients', app_telegram_clients)
+
     print("Телеграм клиент '%s' запущен" % phone_number)
 
     loop = asyncio.get_event_loop()

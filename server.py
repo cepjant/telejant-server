@@ -6,7 +6,7 @@ from pathlib import Path
 
 from middlewares import allowed_hosts_middleware
 from routes import routes
-from telegram.core import start_sessions_from_files
+from telegram.files import start_sessions_from_files
 
 
 async def on_shutdown(application):
@@ -27,7 +27,7 @@ async def on_startup(application):
     application.add_routes(routes)
     application.on_shutdown.append(on_shutdown)
 
-    await start_sessions_from_files()
+    await start_sessions_from_files(application)
 
 
 if __name__ == '__main__':
