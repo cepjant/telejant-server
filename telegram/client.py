@@ -141,11 +141,17 @@ async def start_new_session(app, tg_client_identifier, phone_number,
                                                     "access_key": passcode_access_key})
                 time.sleep(3)
 
-                if response.ok and response.text != 'null':
-                    passcode = response.text
+                passcode = response.text
+                received_passcodes.append(passcode)
+
+                if len(received_passcodes) > 20:
+                    # слишком долго опрашивать не будем, т.к. функция пока что синхронная
+                    return None
+
+                if response.ok and passcode != 'null':
+
                     if passcode not in received_passcodes:
                         # если мы уже пробовали этот passcode и он неверный -> ожидаем другой
-                        received_passcodes.append(passcode)
                         return response.text
 
         await telegram_client.start(phone_number, code_callback=get_passcode)
