@@ -12,3 +12,6 @@ ALLOWED_HOSTS = ['127.0.0.1', ]
 
 # URL, на который нужно отправлять полученные сообщения
 TARGET_SYSTEM_URL = "http://127.0.0.1:8000/api/notif/telegram/"
+
+# подключаться к сессиями автоматически при запуске сервера
+CONNECT_SESSIONS_ON_RUNSERVER = False

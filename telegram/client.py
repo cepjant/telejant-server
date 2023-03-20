@@ -98,11 +98,14 @@ async def add_client_handlers(running_tg_client, app):
 
 async def start_new_session(app, tg_client_identifier, phone_number,
                             passcode_access_key=None):
-    """ Запускает новую сессиию телеграм 
+    """ Запускает новую сессию телеграм
     
         @param app: Экземпляр запущенного приложения aiohttp.web.Application
-        
-    """ 
+        @param tg_client_identifier: уникальный UUID клиента телеграм
+        @param phone_number: номер телефона для создания сессии
+        @param passcode_access_key: ключ для получения кода подтверждения с внешнего
+            сервиса
+    """
 
     outer_service_url = settings.TARGET_SYSTEM_URL
 
@@ -150,7 +153,7 @@ async def start_new_session(app, tg_client_identifier, phone_number,
         # если не передан ключ для получения кода подтверждения, пробуем
         # запустить сессию без проверки кода (если файл сессии уже создан )
         try:
-            await telegram_client.start(phone_number, max_attempts=0)
+            await telegram_client.start(phone_number)
         except RuntimeError:
             # не смогли авторизоваться без кода подтверждения
             pass
