@@ -79,7 +79,7 @@ async def get_telegram_client_status(request):
 
     if app_telegram_clients.get(telegram_guid):
         telegram_client = app_telegram_clients[telegram_guid]
-        telegram_client_status = 'Connected' if telegram_client.is_connected() else 'Disconnected'
+        telegram_client_status = 'Connected' if await telegram_client.get_me() else 'Disconnected'
         response = {"status": 200, "data": {"telegram_client_status": telegram_client_status}}
     else:
         response = {"status": 200, "data": {"telegram_client_status": 'NotFound'}}
